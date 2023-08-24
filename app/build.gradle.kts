@@ -77,6 +77,11 @@ dependencies {
     implementation ("com.google.dagger:hilt-android:2.47")
     annotationProcessor ("com.google.dagger:hilt-compiler:2.47")
 
+    //Retrofit
+    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation ("com.jakewharton.retrofit:retrofit2-kotlin-serialization-converter:0.8.0")
 
-
+    implementation(project(":data"))
+    implementation(project(":domain"))
 }
