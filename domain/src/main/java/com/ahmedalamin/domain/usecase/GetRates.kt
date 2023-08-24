@@ -7,4 +7,5 @@ class GetRates(private val currencyRepo: CurrencyRepo) {
   suspend operator fun invoke() = currencyRepo.getRatesFromRemote()
 
 
+
 }

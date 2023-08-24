@@ -33,11 +33,12 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+//        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -76,11 +77,22 @@ dependencies {
     //hilt
     implementation ("com.google.dagger:hilt-android:2.47")
     annotationProcessor ("com.google.dagger:hilt-compiler:2.47")
+    annotationProcessor ("com.google.dagger:hilt-android-compiler:2.47")
+    kapt ("com.google.dagger:hilt-compiler:2.47")
+
+
 
     //Retrofit
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation ("com.jakewharton.retrofit:retrofit2-kotlin-serialization-converter:0.8.0")
+    implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
+
+    //ViewModel
+    implementation ("androidx.lifecycle:lifecycle-livedata-ktx:2.4.0")
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.0")
+    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
+
+
 
     implementation(project(":data"))
     implementation(project(":domain"))

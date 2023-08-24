@@ -4,7 +4,10 @@ import com.ahmedalamin.domain.entity.ApiRates
 
 interface CurrencyRepo {
 
-    fun getRatesFromRemote():ApiRates
+   suspend fun getRatesFromRemote():ApiRates
+
+
+
 
 
 }

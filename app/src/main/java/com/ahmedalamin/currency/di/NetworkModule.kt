@@ -1,6 +1,7 @@
 package com.ahmedalamin.currency.di
 
 import com.ahmedalamin.data.remote.ApiService
+import com.ahmedalamin.domain.entity.Rates
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -42,5 +43,9 @@ object NetworkModule{
     fun provideApiService(retrofit: Retrofit):ApiService{
         return retrofit.create(ApiService::class.java)
     }
+
+
+
+
 
 }
