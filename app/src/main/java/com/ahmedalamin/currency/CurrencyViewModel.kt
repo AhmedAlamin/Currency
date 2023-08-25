@@ -22,7 +22,7 @@ class CurrencyViewModel @Inject constructor(
     private val _currenciesRates : MutableStateFlow<ApiRates?> = MutableStateFlow(null)
 
     val currenciesRates:StateFlow<ApiRates?> = _currenciesRates
-    var rateValues: List<String>? = null
+     var rateValues: List<String>? = null
 
     fun getRates() {
 
@@ -32,7 +32,7 @@ class CurrencyViewModel @Inject constructor(
 
             _currenciesRates.value =  getRatesUseCase()
 
-                 rateValues = currenciesRates?.value?.rates!!.map { it.toString() }
+                 rateValues = currenciesRates.value?.rates!!.map { it.toString() }
 
                 Log.e("ccViewModel2",currenciesRates.value.toString())
 
