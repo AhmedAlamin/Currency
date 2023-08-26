@@ -303,12 +303,19 @@ fun CurrencyScreen(currenciesRates: ApiRates?,navController: NavController,share
                                         currenciesRates!!
                                     )!!
 
+//
+//                                    val newItem = History(currenciesRates.date,amount,result,selectedCurrency1!!,selectedCurrency2!!)
+//
+//                                    // Update the historyListState with the new item added
+//                                    listHistory.add(newItem)
 
+
+                                    // Retrieve the existing history list
+                                    listHistory = sharedPreferencesManager.getHistoryList("history").toMutableList()
+
+                                     // Append a new item to the list
                                     val newItem = History(currenciesRates.date,amount,result,selectedCurrency1!!,selectedCurrency2!!)
-
-                                    // Update the historyListState with the new item added
                                     listHistory.add(newItem)
-
 
                                     sharedPreferencesManager.saveHistoryList("history",listHistory)
 
@@ -320,7 +327,6 @@ fun CurrencyScreen(currenciesRates: ApiRates?,navController: NavController,share
                                     .padding(16.dp)
                                     .width(100.dp)
                                     .padding(16.dp)
-
                             )
                         }
 
