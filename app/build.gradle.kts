@@ -93,6 +93,8 @@ dependencies {
     implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
 
 
+    //navigation
+    implementation ("androidx.navigation:navigation-compose:2.4.0-alpha10")
 
     implementation(project(":data"))
     implementation(project(":domain"))

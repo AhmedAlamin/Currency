@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -41,18 +42,23 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavController
 
 import com.ahmedalamin.currency.ui.theme.CurrencyTheme
 import com.ahmedalamin.domain.entity.ApiRates
+import com.ahmedalamin.domain.entity.History
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
@@ -68,44 +74,26 @@ class MainActivity : ComponentActivity() {
     private val viewModel: CurrencyViewModel by viewModels()
     private var isLoading by mutableStateOf(true) // Set initial state to loading
 
-    var data: ApiRates? = null
+
     private var allResponseData: ApiRates? = null
     private var listOfCurrencies: List<String>? = null
+
+
 
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        var sharedPreferencesManager = SharedPreferencesManager(this)
+
 
         viewModel.getRates()
 
-//        lifecycleScope.launch {
-//            try {
-//                viewModel.currenciesRates.collect { it ->
-//
-////                    listOfCurrencies = it?.rates?.map { it.key }
-////                    allResponseData = it
-//////                    allResponseData?.let { it1 -> updateUIWithData(it1) }
-////                    allResponseData?.let { it1 -> updateUIWithData(it1) }
-//
-//                    if (it != null) {
-//                        updateUIWithData(it)
-//                    }
-//
-//
-//                }
-//            } catch (e: Exception) {
-//                // Handle error
-//            } finally {
-//                isLoading = false // Update loading state when data is fetched or an error occurs
-//            }
-//        }
-
-
         setContent {
             val currenciesRates by viewModel.currenciesRates.collectAsState()
-            CurrencyScreen(currenciesRates)
+//            CurrencyScreen(currenciesRates)
+             Nav(currenciesRates = currenciesRates,sharedPreferencesManager)
         }
     }
 
@@ -128,7 +116,7 @@ fun calculateCurrencyAmount(
 ): Double? {
     val rates = ratesResponse
 
-    if (baseCurrency != null) {
+    if(baseCurrency != null) {
         return amount * baseCurrency
     } else {
         return null // Target currency not found in rates
@@ -204,11 +192,12 @@ fun IconTextButton(
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
-fun CurrencyScreen(currenciesRates: ApiRates?) {
+fun CurrencyScreen(currenciesRates: ApiRates?,navController: NavController,sharedPreferencesManager: SharedPreferencesManager) {
     val listOfCurrencies = currenciesRates?.rates?.keys?.toList() ?: emptyList()
     val listOfValuesOfCorrencies = currenciesRates?.rates?.values?.toList() ?: emptyList()
+
 
 
     var selectedCurrency1 by remember { mutableStateOf(listOfCurrencies.getOrNull(0)) }
@@ -229,6 +218,7 @@ fun CurrencyScreen(currenciesRates: ApiRates?) {
             var amount by remember {
                 mutableStateOf(1.0)
             }
+
 
 
 
@@ -286,12 +276,26 @@ fun CurrencyScreen(currenciesRates: ApiRates?) {
 
                             Spacer(modifier = Modifier.size(16.dp))
 
+                            var text by remember { mutableStateOf("") }
+
+                            val keyboardController = LocalSoftwareKeyboardController.current
+
+
+
+                            var listHistory by remember {
+                                mutableStateOf<MutableList<History>>(mutableListOf())
+                            }
+
 
 
                             TextField(
                                 value = amount.toString(),
                                 onValueChange = {
                                     amount = it.toDouble()
+
+
+                                },
+                                keyboardActions = KeyboardActions(onDone ={
                                     result = convertCurrency(
                                         amount,
                                         selectedCurrency1!!,
@@ -299,12 +303,24 @@ fun CurrencyScreen(currenciesRates: ApiRates?) {
                                         currenciesRates!!
                                     )!!
 
-                                },
-                                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                                modifier = Modifier
+
+                                    val newItem = History(currenciesRates.date,amount,result,selectedCurrency1!!,selectedCurrency2!!)
+
+                                    // Update the historyListState with the new item added
+                                    listHistory.add(newItem)
+
+
+                                    sharedPreferencesManager.saveHistoryList("history",listHistory)
+
+
+                                } ),
+
+                                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done)
+                                ,modifier = Modifier
                                     .padding(16.dp)
                                     .width(100.dp)
                                     .padding(16.dp)
+
                             )
                         }
 
@@ -361,7 +377,7 @@ fun CurrencyScreen(currenciesRates: ApiRates?) {
 
 
                             Text(
-                                text = roundDouble(result, 2).toString(),
+                                text = roundDouble(result, 4).toString(),
                                 Modifier
                                     .background(Color.Gray)
                                     .size(100.dp)
@@ -371,10 +387,6 @@ fun CurrencyScreen(currenciesRates: ApiRates?) {
                         }
                     }
                 }
-
-
-
-
 
 
 
@@ -389,7 +401,7 @@ fun CurrencyScreen(currenciesRates: ApiRates?) {
                         text = "Details",
                         icon = Icons.Default.PlayArrow,
                         onClick = {
-
+                        navController.navigate("detailScreen")
                         })
 
                 }

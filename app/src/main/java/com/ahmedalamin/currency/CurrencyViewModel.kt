@@ -37,13 +37,6 @@ class CurrencyViewModel @Inject constructor(
                 Log.e("ccViewModel2",currenciesRates.value.toString())
 
 
-
-//            getRatesUseCase().apply {
-//                _currenciesRates.value?.rates
-//                Log.e("ccViewModel2",currenciesRates.toString())
-//
-//            }
-
             }catch (e:Exception){
                 Log.e("ccViewModel",e.message.toString())
             }
