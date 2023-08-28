@@ -211,14 +211,18 @@ fun CurrencyScreen(currenciesRates: ApiRates?,navController: NavController,share
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            var result by remember {
-                mutableStateOf(1.0)
-            }
+
 
             var amount by remember {
                 mutableStateOf(1.0)
             }
+            var amount2 by remember {
+                mutableStateOf(1.0)
+            }
 
+            var listHistory by remember {
+                mutableStateOf<MutableList<History>>(mutableListOf())
+            }
 
 
 
@@ -260,7 +264,7 @@ fun CurrencyScreen(currenciesRates: ApiRates?,navController: NavController,share
                                             onItemSelected = {
                                                 selectedCurrency1 = it
 
-                                                result = convertCurrency(
+                                                amount2 = convertCurrency(
                                                     amount,
                                                     selectedCurrency1!!,
                                                     selectedCurrency2!!,
@@ -282,9 +286,6 @@ fun CurrencyScreen(currenciesRates: ApiRates?,navController: NavController,share
 
 
 
-                            var listHistory by remember {
-                                mutableStateOf<MutableList<History>>(mutableListOf())
-                            }
 
 
 
@@ -293,28 +294,27 @@ fun CurrencyScreen(currenciesRates: ApiRates?,navController: NavController,share
                                 onValueChange = {
                                     amount = it.toDouble()
 
-
+                                    amount2 = convertCurrency(
+                                        amount,
+                                        selectedCurrency1!!,
+                                        selectedCurrency2!!,
+                                        currenciesRates!!
+                                    )!!
                                 },
                                 keyboardActions = KeyboardActions(onDone ={
-                                    result = convertCurrency(
+                                    amount2 = convertCurrency(
                                         amount,
                                         selectedCurrency1!!,
                                         selectedCurrency2!!,
                                         currenciesRates!!
                                     )!!
 
-//
-//                                    val newItem = History(currenciesRates.date,amount,result,selectedCurrency1!!,selectedCurrency2!!)
-//
-//                                    // Update the historyListState with the new item added
-//                                    listHistory.add(newItem)
-
 
                                     // Retrieve the existing history list
                                     listHistory = sharedPreferencesManager.getHistoryList("history").toMutableList()
 
                                      // Append a new item to the list
-                                    val newItem = History(currenciesRates.date,amount,result,selectedCurrency1!!,selectedCurrency2!!)
+                                    val newItem = History(currenciesRates.date,amount,amount2,selectedCurrency1!!,selectedCurrency2!!)
                                     listHistory.add(newItem)
 
                                     sharedPreferencesManager.saveHistoryList("history",listHistory)
@@ -337,9 +337,14 @@ fun CurrencyScreen(currenciesRates: ApiRates?,navController: NavController,share
                             selectedCurrency1 = selectedCurrency2
                             selectedCurrency2 = temp
 
-                            result = convertCurrency(
-                                amount, selectedCurrency1!!, selectedCurrency2!!, currenciesRates!!
-                            )!!
+                            var temp2 = amount
+                            amount = amount2
+                            amount2 = temp2
+
+
+                                amount2 = convertCurrency(
+                                    amount, selectedCurrency1!!, selectedCurrency2!!, currenciesRates!!
+                                )!!
 
                         })
 
@@ -365,8 +370,8 @@ fun CurrencyScreen(currenciesRates: ApiRates?,navController: NavController,share
                                             selectedItem = it,
                                             onItemSelected = {
                                                 selectedCurrency2 = it
-                                                result = convertCurrency(
-                                                    amount,
+                                                amount = convertCurrency(
+                                                    amount2,
                                                     selectedCurrency1!!,
                                                     selectedCurrency2!!,
                                                     currenciesRates!!
@@ -382,13 +387,46 @@ fun CurrencyScreen(currenciesRates: ApiRates?,navController: NavController,share
                             Spacer(modifier = Modifier.size(16.dp))
 
 
-                            Text(
-                                text = roundDouble(result, 4).toString(),
-                                Modifier
-                                    .background(Color.Gray)
-                                    .size(100.dp)
+
+                            TextField(
+                                value =  amount2.toString(),
+                                onValueChange = {
+                                    amount2 = it.toDouble()
+
+                                    amount = convertCurrency(
+                                        amount2,
+                                        selectedCurrency1!!,
+                                        selectedCurrency2!!,
+                                        currenciesRates!!
+                                    )!!
+                                },
+                                keyboardActions = KeyboardActions(onDone ={
+                                    amount = convertCurrency(
+                                        amount2,
+                                        selectedCurrency1!!,
+                                        selectedCurrency2!!,
+                                        currenciesRates!!
+                                    )!!
+
+                                    // Retrieve the existing history list
+                                    listHistory = sharedPreferencesManager.getHistoryList("history").toMutableList()
+
+                                    // Append a new item to the list
+                                    val newItem = History(currenciesRates.date,amount,amount2,selectedCurrency1!!,selectedCurrency2!!)
+                                    listHistory.add(newItem)
+
+                                    sharedPreferencesManager.saveHistoryList("history",listHistory)
+
+
+                                } ),
+
+                                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done)
+                                ,modifier = Modifier
+                                    .padding(16.dp)
+                                    .width(100.dp)
                                     .padding(16.dp)
                             )
+                        }
 
                         }
                     }
@@ -403,6 +441,7 @@ fun CurrencyScreen(currenciesRates: ApiRates?,navController: NavController,share
                         .padding(top = 16.dp)
                 ) {
 
+                    //
                     IconTextButton(
                         text = "Details",
                         icon = Icons.Default.PlayArrow,
@@ -416,7 +455,7 @@ fun CurrencyScreen(currenciesRates: ApiRates?,navController: NavController,share
 
         }
     }
-}
+
 
 
 fun convertCurrency(
@@ -430,7 +469,7 @@ fun convertCurrency(
 
     if (fromRate != null && toRate != null) {
         val baseAmount = amount / fromRate
-        return baseAmount * toRate
+        return roundDouble(baseAmount * toRate ,4)
     }
 
     return null // Handle missing exchange rates
