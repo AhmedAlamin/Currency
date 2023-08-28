@@ -1,6 +1,7 @@
 package com.ahmedalamin.currency
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 
@@ -10,12 +11,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -34,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,26 +63,33 @@ import com.ahmedalamin.domain.entity.History
 import dagger.hilt.android.AndroidEntryPoint
 import java.math.BigDecimal
 import java.math.RoundingMode
+import kotlin.random.Random
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
-
+class MainActivity:ComponentActivity() {
 
     private val viewModel: CurrencyViewModel by viewModels()
-
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        var sharedPreferencesManager = SharedPreferencesManager(this)
+        val sharedPreferencesManager = SharedPreferencesManager(this)
 
 
         viewModel.getRates()
 
         setContent {
-            val currenciesRates by viewModel.currenciesRates.collectAsState()
-            Nav(currenciesRates = currenciesRates, sharedPreferencesManager)
+
+                val currenciesRates by viewModel.currenciesRates.collectAsState()
+
+                Nav(currenciesRates = currenciesRates, sharedPreferencesManager)
+
+
+
+
+
+
         }
     }
 
@@ -151,7 +163,6 @@ fun IconTextButton(
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun CurrencyScreen(
@@ -159,44 +170,76 @@ fun CurrencyScreen(
     navController: NavController,
     sharedPreferencesManager: SharedPreferencesManager,
 ) {
-    val listOfCurrencies = currenciesRates?.rates?.keys?.toList() ?: emptyList()
+    var listOfCurrencies by remember { mutableStateOf<List<String>>(emptyList()) }
 
-    var selectedCurrency1 by remember { mutableStateOf(listOfCurrencies.getOrNull(0)) }
-    var selectedCurrency2 by remember { mutableStateOf(listOfCurrencies.getOrNull(0)) }
+//    // Fetch the list of currencies from API
+//    LaunchedEffect(true) {
+////        listOfCurrencies = fetchListOfCurrenciesFromApi()
+//        listOfCurrencies = currenciesRates?.rates?.keys?.toList() ?: emptyList()
+//    }
+
+    // Simulate fetching currenciesRates from API
+    LaunchedEffect(true) {
+        // Fetch currenciesRates from API (Replace with actual API call)
+         // Implement this
+
+        if (currenciesRates != null) {
+//            currenciesRates = fetchedRates
+            listOfCurrencies = currenciesRates.rates.keys.toList() ?: emptyList()
+        }
+    }
+
+
+
+
+
+
+
+    Log.d("vvvv",listOfCurrencies.toString())
+
+
+
+    var selectedCurrency1 by remember { mutableStateOf(currenciesRates?.rates?.keys?.first()) }
+    var selectedCurrency2 by remember { mutableStateOf(currenciesRates?.rates?.keys?.first()) }
+
+    var amount by remember {
+        mutableStateOf(1.0)
+    }
+    var amount2 by remember {
+        mutableStateOf(1.0)
+    }
+
+    var listHistory by remember {
+        mutableStateOf<MutableList<History>>(mutableListOf())
+    }
+
+    val keyboardController = LocalSoftwareKeyboardController.current
 
 
     CurrencyTheme {
+
         // A surface container using the 'background' color from the theme
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
+            color = MaterialTheme.colorScheme.background,
+
         ) {
 
-
-            var amount by remember {
-                mutableStateOf(1.0)
-            }
-            var amount2 by remember {
-                mutableStateOf(1.0)
-            }
-
-            var listHistory by remember {
-                mutableStateOf<MutableList<History>>(mutableListOf())
-            }
-
-
-            if (listOfCurrencies.isEmpty()) {
-                // Show loading indicator (e.g., ProgressBar)
-                CircularProgressIndicator(modifier = Modifier.wrapContentSize())
-            } else {
-                Column(
-                    verticalArrangement = Arrangement.SpaceAround,
-                    horizontalAlignment = Alignment.CenterHorizontally,
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+            ) {
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
                 ) {
-
-
+                    // Content for the first row (1/3 of the total height)
                     Row(
-                        horizontalArrangement = Arrangement.SpaceAround,
+                        horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .padding(top = 16.dp)
@@ -204,7 +247,7 @@ fun CurrencyScreen(
                     ) {
 
                         Column(
-                            verticalArrangement = Arrangement.SpaceBetween,
+                            verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.weight(1.0f,true)
                         ) {
@@ -230,7 +273,7 @@ fun CurrencyScreen(
                                                     selectedCurrency1!!,
                                                     selectedCurrency2!!,
                                                     currenciesRates!!
-                                                )!!
+                                                )?: 0.0
                                             },
                                             modifier = Modifier.wrapContentWidth()
                                         )
@@ -242,58 +285,11 @@ fun CurrencyScreen(
                             Spacer(modifier = Modifier.size(16.dp))
 
 
-                            TextField(
-                                value = amount.toString(),
-                                onValueChange = {
-                                    amount = it.toDouble()
 
-                                    amount2 = convertCurrency(
-                                        amount,
-                                        selectedCurrency1!!,
-                                        selectedCurrency2!!,
-                                        currenciesRates!!
-                                    )!!
-                                },
-                                keyboardActions = KeyboardActions(onDone = {
-                                    amount2 = convertCurrency(
-                                        amount,
-                                        selectedCurrency1!!,
-                                        selectedCurrency2!!,
-                                        currenciesRates!!
-                                    )!!
-
-
-                                    // Retrieve the existing history list
-                                    listHistory = sharedPreferencesManager.getHistoryList("history")
-                                        .toMutableList()
-
-                                    // Append a new item to the list
-                                    val newItem = History(
-                                        currenciesRates.date,
-                                        amount,
-                                        amount2,
-                                        selectedCurrency1!!,
-                                        selectedCurrency2!!
-                                    )
-                                    listHistory.add(newItem)
-
-                                    sharedPreferencesManager.saveHistoryList("history", listHistory)
-
-
-                                }),
-
-                                keyboardOptions = KeyboardOptions.Default.copy(
-                                    keyboardType = KeyboardType.Number,
-                                    imeAction = ImeAction.Done
-                                ), modifier = Modifier
-                                    .padding(16.dp)
-                                    .wrapContentWidth()
-                                    .padding(16.dp)
-                            )
                         }
 
 
-                        IconTextButton(text = "Swich", icon = Icons.Default.Info, onClick = {
+                        IconTextButton(text = "Switch", icon = Icons.Default.Info, onClick = {
 
                             var temp = selectedCurrency1
                             selectedCurrency1 = selectedCurrency2
@@ -305,14 +301,17 @@ fun CurrencyScreen(
 
 
                             amount2 = convertCurrency(
-                                amount, selectedCurrency1!!, selectedCurrency2!!, currenciesRates!!
-                            )!!
-
-                        })
+                                amount,
+                                selectedCurrency1!!,
+                                selectedCurrency2!!,
+                                currenciesRates!!
+                            )?:0.0
+                        },
+                        )
 
 
                         Column(
-                            verticalArrangement = Arrangement.SpaceBetween,
+                            verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.weight(1.0f,true)
                         ) {
@@ -338,7 +337,7 @@ fun CurrencyScreen(
                                                     selectedCurrency1!!,
                                                     selectedCurrency2!!,
                                                     currenciesRates!!
-                                                )!!
+                                                )?:0.0
                                             },
                                             modifier = Modifier.wrapContentWidth()
                                         )
@@ -351,63 +350,147 @@ fun CurrencyScreen(
 
 
 
-                            TextField(
-                                value = amount2.toString(),
-                                onValueChange = {
-                                    amount2 = it.toDouble()
 
-                                    amount = convertCurrency(
-                                        amount2,
-                                        selectedCurrency1!!,
-                                        selectedCurrency2!!,
-                                        currenciesRates!!
-                                    )!!
-                                },
-                                keyboardActions = KeyboardActions(onDone = {
-                                    amount = convertCurrency(
-                                        amount2,
-                                        selectedCurrency1!!,
-                                        selectedCurrency2!!,
-                                        currenciesRates!!
-                                    )!!
-
-                                    // Retrieve the existing history list
-                                    listHistory = sharedPreferencesManager.getHistoryList("history")
-                                        .toMutableList()
-
-                                    // Append a new item to the list
-                                    val newItem = History(
-                                        currenciesRates.date,
-                                        amount,
-                                        amount2,
-                                        selectedCurrency1!!,
-                                        selectedCurrency2!!
-                                    )
-                                    listHistory.add(newItem)
-
-                                    sharedPreferencesManager.saveHistoryList("history", listHistory)
-
-
-                                }),
-
-                                keyboardOptions = KeyboardOptions.Default.copy(
-                                    keyboardType = KeyboardType.Number,
-                                    imeAction = ImeAction.Done
-                                ), modifier = Modifier
-                                    .padding(16.dp)
-                                    .wrapContentWidth()
-                                    .padding(16.dp)
-                            )
                         }
 
                     }
 
 
+                }
+
+                Row( verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) {
+
                     Row(
-                        horizontalArrangement = Arrangement.SpaceAround,
+                        horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.Top,
                         modifier = Modifier
-                            .padding(bottom = 32.dp)
+                            .padding(bottom = 16.dp)
+                    ) {
+                        TextField(
+                            value = amount.toString(),
+                            onValueChange = {
+                                amount = it.toDouble()
+
+                                amount2 = convertCurrency(
+                                    amount,
+                                    selectedCurrency1!!,
+                                    selectedCurrency2!!,
+                                    currenciesRates!!
+                                )?:0.0
+                            },
+                            keyboardActions = KeyboardActions(onDone = {
+                                amount2 = convertCurrency(
+                                    amount,
+                                    selectedCurrency1!!,
+                                    selectedCurrency2!!,
+                                    currenciesRates!!
+                                )!!
+
+
+                                // Retrieve the existing history list
+                                listHistory = sharedPreferencesManager.getHistoryList("history")
+                                    .toMutableList()
+
+                                // Append a new item to the list
+                                val newItem = History(
+                                    currenciesRates.date,
+                                    amount,
+                                    amount2,
+                                    selectedCurrency1!!,
+                                    selectedCurrency2!!
+                                )
+                                listHistory.add(newItem)
+
+                                sharedPreferencesManager.saveHistoryList("history", listHistory)
+
+
+                                keyboardController?.hide()
+                            }),
+
+                            keyboardOptions = KeyboardOptions.Default.copy(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Done
+                            ), modifier = Modifier
+                                .padding(16.dp)
+                                .weight(1.0f)
+                                .padding(16.dp)
+                        )
+
+
+
+                        TextField(
+                            value = amount2.toString(),
+                            onValueChange = {
+                                amount2 = it.toDouble()
+
+                                amount = convertCurrency(
+                                    amount2,
+                                    selectedCurrency1!!,
+                                    selectedCurrency2!!,
+                                    currenciesRates!!
+                                )?:0.0
+                            },
+                            keyboardActions = KeyboardActions(onDone = {
+                                amount = convertCurrency(
+                                    amount2,
+                                    selectedCurrency1!!,
+                                    selectedCurrency2!!,
+                                    currenciesRates!!
+                                )!!
+
+                                // Retrieve the existing history list
+                                listHistory = sharedPreferencesManager.getHistoryList("history")
+                                    .toMutableList()
+
+                                // Append a new item to the list
+                                val newItem = History(
+                                    currenciesRates.date,
+                                    amount,
+                                    amount2,
+                                    selectedCurrency1!!,
+                                    selectedCurrency2!!
+                                )
+                                listHistory.add(newItem)
+
+                                sharedPreferencesManager.saveHistoryList("history", listHistory)
+
+                                keyboardController?.hide()
+                            }),
+
+                            keyboardOptions = KeyboardOptions.Default.copy(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Done
+                            ), modifier = Modifier
+                                .padding(16.dp)
+                                .weight(1.0f)
+                                .padding(16.dp)
+                        )
+
+
+                    }
+
+                }
+
+                Row(
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+
+                ) {
+                    // Content for the third row (1/4 of the total height)
+
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.Top,
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
                     ) {
 
                         //
@@ -421,6 +504,286 @@ fun CurrencyScreen(
                     }
                 }
             }
+
+
+
+
+
+//            Column(
+//                verticalArrangement = Arrangement.Center,
+//                horizontalAlignment = Alignment.CenterHorizontally,
+//            ) {
+//                var amount by remember {
+//                    mutableStateOf(1.0)
+//                }
+//                var amount2 by remember {
+//                    mutableStateOf(1.0)
+//                }
+//
+//                var listHistory by remember {
+//                    mutableStateOf<MutableList<History>>(mutableListOf())
+//                }
+//
+//
+//                if (listOfCurrencies.isEmpty()) {
+//                    // Show loading indicator (e.g., ProgressBar)
+//                    CircularProgressIndicator(modifier = Modifier.wrapContentSize())
+//                } else {
+//                    Column(
+//                        verticalArrangement = Arrangement.Center,
+//                        horizontalAlignment = Alignment.CenterHorizontally,
+//                    ) {
+//
+//
+//                        Row(
+//                            horizontalArrangement = Arrangement.Center,
+//                            verticalAlignment = Alignment.CenterVertically,
+//                            modifier = Modifier
+//                                .padding(top = 16.dp)
+//                                .weight(2.0f, true)
+//                        ) {
+//
+//                            Column(
+//                                verticalArrangement = Arrangement.Center,
+//                                horizontalAlignment = Alignment.CenterHorizontally,
+//                                modifier = Modifier.weight(1.0f,true)
+//                            ) {
+//                                Text(text = "FROM")
+//
+//                                Spacer(modifier = Modifier.size(16.dp))
+//
+//                                if (listOfCurrencies.isEmpty()) {
+//                                    // Show loading indicator (e.g., ProgressBar)
+//                                    CircularProgressIndicator(modifier = Modifier.wrapContentSize())
+//                                } else {
+//
+//                                    listOfCurrencies.let { it1 ->
+//                                        selectedCurrency1?.let {
+//                                            DropdownMenuComponent(
+//                                                items = it1,
+//                                                selectedItem = it,
+//                                                onItemSelected = {
+//                                                    selectedCurrency1 = it
+//
+//                                                    amount2 = convertCurrency(
+//                                                        amount,
+//                                                        selectedCurrency1!!,
+//                                                        selectedCurrency2!!,
+//                                                        currenciesRates!!
+//                                                    )!!
+//                                                },
+//                                                modifier = Modifier.wrapContentWidth()
+//                                            )
+//                                        }
+//                                    }
+//                                }
+//
+//
+//                                Spacer(modifier = Modifier.size(16.dp))
+//
+//
+//
+//                            }
+//
+//
+//                            IconTextButton(text = "Swich", icon = Icons.Default.Info, onClick = {
+//
+//                                var temp = selectedCurrency1
+//                                selectedCurrency1 = selectedCurrency2
+//                                selectedCurrency2 = temp
+//
+//                                var temp2 = amount
+//                                amount = amount2
+//                                amount2 = temp2
+//
+//
+//                                amount2 = convertCurrency(
+//                                    amount, selectedCurrency1!!, selectedCurrency2!!, currenciesRates!!
+//                                )!!
+//
+//                            },
+//                            )
+//
+//
+//                            Column(
+//                                verticalArrangement = Arrangement.Center,
+//                                horizontalAlignment = Alignment.CenterHorizontally,
+//                                modifier = Modifier.weight(1.0f,true)
+//                            ) {
+//                                Text(text = "TO")
+//
+//                                Spacer(modifier = Modifier.size(16.dp))
+//
+//
+//                                if (listOfCurrencies.isEmpty()) {
+//                                    // Show loading indicator (e.g., ProgressBar)
+//                                    CircularProgressIndicator(modifier = Modifier.wrapContentSize())
+//                                } else {
+//
+//                                    listOfCurrencies.let { it2 ->
+//                                        selectedCurrency2?.let {
+//                                            DropdownMenuComponent(
+//                                                items = it2,
+//                                                selectedItem = it,
+//                                                onItemSelected = {
+//                                                    selectedCurrency2 = it
+//                                                    amount = convertCurrency(
+//                                                        amount2,
+//                                                        selectedCurrency1!!,
+//                                                        selectedCurrency2!!,
+//                                                        currenciesRates!!
+//                                                    )!!
+//                                                },
+//                                                modifier = Modifier.wrapContentWidth()
+//                                            )
+//                                        }
+//                                    }
+//                                }
+//
+//
+//                                Spacer(modifier = Modifier.size(16.dp))
+//
+//
+//
+//
+//                            }
+//
+//                        }
+//
+//
+//
+//                        Row(
+//                            horizontalArrangement = Arrangement.Center,
+//                            verticalAlignment = Alignment.Top,
+//                            modifier = Modifier
+//                                .padding(bottom = 16.dp)
+//                        ) {
+//                            TextField(
+//                                value = amount.toString(),
+//                                onValueChange = {
+//                                    amount = it.toDouble()
+//
+//                                    amount2 = convertCurrency(
+//                                        amount,
+//                                        selectedCurrency1!!,
+//                                        selectedCurrency2!!,
+//                                        currenciesRates!!
+//                                    )!!
+//                                },
+//                                keyboardActions = KeyboardActions(onDone = {
+//                                    amount2 = convertCurrency(
+//                                        amount,
+//                                        selectedCurrency1!!,
+//                                        selectedCurrency2!!,
+//                                        currenciesRates!!
+//                                    )!!
+//
+//
+//                                    // Retrieve the existing history list
+//                                    listHistory = sharedPreferencesManager.getHistoryList("history")
+//                                        .toMutableList()
+//
+//                                    // Append a new item to the list
+//                                    val newItem = History(
+//                                        currenciesRates.date,
+//                                        amount,
+//                                        amount2,
+//                                        selectedCurrency1!!,
+//                                        selectedCurrency2!!
+//                                    )
+//                                    listHistory.add(newItem)
+//
+//                                    sharedPreferencesManager.saveHistoryList("history", listHistory)
+//
+//
+//                                }),
+//
+//                                keyboardOptions = KeyboardOptions.Default.copy(
+//                                    keyboardType = KeyboardType.Number,
+//                                    imeAction = ImeAction.Done
+//                                ), modifier = Modifier
+//                                    .padding(16.dp)
+//                                    .weight(1.0f)
+//                                    .padding(16.dp)
+//                            )
+//
+//
+//
+//                            TextField(
+//                                value = amount2.toString(),
+//                                onValueChange = {
+//                                    amount2 = it.toDouble()
+//
+//                                    amount = convertCurrency(
+//                                        amount2,
+//                                        selectedCurrency1!!,
+//                                        selectedCurrency2!!,
+//                                        currenciesRates!!
+//                                    )!!
+//                                },
+//                                keyboardActions = KeyboardActions(onDone = {
+//                                    amount = convertCurrency(
+//                                        amount2,
+//                                        selectedCurrency1!!,
+//                                        selectedCurrency2!!,
+//                                        currenciesRates!!
+//                                    )!!
+//
+//                                    // Retrieve the existing history list
+//                                    listHistory = sharedPreferencesManager.getHistoryList("history")
+//                                        .toMutableList()
+//
+//                                    // Append a new item to the list
+//                                    val newItem = History(
+//                                        currenciesRates.date,
+//                                        amount,
+//                                        amount2,
+//                                        selectedCurrency1!!,
+//                                        selectedCurrency2!!
+//                                    )
+//                                    listHistory.add(newItem)
+//
+//                                    sharedPreferencesManager.saveHistoryList("history", listHistory)
+//
+//
+//                                }),
+//
+//                                keyboardOptions = KeyboardOptions.Default.copy(
+//                                    keyboardType = KeyboardType.Number,
+//                                    imeAction = ImeAction.Done
+//                                ), modifier = Modifier
+//                                    .padding(16.dp)
+//                                    .weight(1.0f)
+//                                    .padding(16.dp)
+//                            )
+//
+//
+//                        }
+//
+//
+//
+//                        Row(
+//                            horizontalArrangement = Arrangement.Center,
+//                            verticalAlignment = Alignment.Top,
+//                            modifier = Modifier
+//                                .padding(bottom = 16.dp)
+//                        ) {
+//
+//                            //
+//                            IconTextButton(
+//                                text = "Details",
+//                                icon = Icons.Default.PlayArrow,
+//                                onClick = {
+//                                    navController.navigate("detailScreen")
+//                                })
+//
+//                        }
+//                    }
+//                }
+//
+//            }
+
+
 
 
 
@@ -450,5 +813,5 @@ fun convertCurrency(
 }
 
 fun roundDouble(number: Double, digits: Int): Double {
-    return BigDecimal(number).setScale(digits, RoundingMode.HALF_UP).toDouble()
+    return BigDecimal(number).setScale(digits, RoundingMode.FLOOR).toDouble()
 }
