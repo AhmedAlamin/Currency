@@ -15,7 +15,7 @@ fun Nav(currenciesRates: ApiRates?,sharedPreferencesManager: SharedPreferencesMa
     NavHost(navController = navController, startDestination = "mainScreen") {
 
         composable(route = "detailScreen"){
-                DetailsScreen(sharedPreferencesManager)
+                DetailsScreen(sharedPreferencesManager,currenciesRates)
         }
 
         composable(route = "mainScreen"){

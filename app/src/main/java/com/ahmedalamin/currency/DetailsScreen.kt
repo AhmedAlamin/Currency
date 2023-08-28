@@ -3,7 +3,9 @@ package com.ahmedalamin.currency
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,23 +15,34 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ahmedalamin.domain.entity.ApiRates
 import com.ahmedalamin.domain.entity.History
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
 @Composable
-fun DetailsScreen(sharedPreferencesManager: SharedPreferencesManager) {
+fun DetailsScreen(sharedPreferencesManager: SharedPreferencesManager,currenciesRates: ApiRates?) {
 
 
     val dataList = sharedPreferencesManager.getHistoryList("history")
@@ -55,7 +68,16 @@ fun DetailsScreen(sharedPreferencesManager: SharedPreferencesManager) {
             modifier = Modifier.height(300.dp)
         ) {
             FilteredHistoryList(dataList)
-            FilteredHistoryList(dataList)
+            // Extract the rates map from the ApiRates instance and create a list with a single map
+            var ratesList: List<Map<String, Double>>? = null
+
+            if (currenciesRates != null) {
+                ratesList = listOf(currenciesRates.rates)
+            }
+
+            if (ratesList != null) {
+                ConversionList(ratesList)
+            }
         }
     }
 
@@ -137,6 +159,98 @@ fun HistoryChart(historyList: List<History>) {
             style = Stroke(width = 2.dp.toPx())
         )
     }
+}
+
+
+
+@Composable
+fun ConversionList(conversionData: List<Map<String, Double>>) {
+    var selectedBaseCurrency by remember { mutableStateOf(conversionData.first().keys.first()) }
+
+    val listOfCurrencies = conversionData.take(10).first().keys.toList()
+
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Dropdown to select the base currency
+        DropdownMenuComponent(
+            items = listOfCurrencies,
+            selectedItem = selectedBaseCurrency,
+            onItemSelected = {
+                selectedBaseCurrency = it
+            },
+            modifier = Modifier.wrapContentWidth()
+        )
+
+        Text(
+            text = "Conversions from $selectedBaseCurrency",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        LazyColumn {
+            items(conversionData) { dataMap ->
+
+                val conversionRates = dataMap.filterKeys { it != selectedBaseCurrency }
+                // Take the first 10 conversion rates
+                val targetCurrencies = conversionRates.keys.toList().take(10)
+
+
+                targetCurrencies.forEach { currency ->
+                    val rate =  ConvertCurrency(1.0,selectedBaseCurrency,listOfCurrencies,conversionData)
+                    rate?.let {
+                        val convertedAmount = it
+//                        * 10.0 // Convert 1 unit of base currency to 10 units of target currency
+                        Text(
+                            text = "1 $selectedBaseCurrency to $currency: ${convertedAmount[currency]}",
+                            fontSize = 16.sp,
+                            textAlign = TextAlign.Start,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        Divider(modifier = Modifier.padding(vertical = 16.dp))
+                    }
+                }
+
+            }
+        }
+    }
+}
+
+
+
+
+
+fun ConvertCurrency(
+    amount: Double,
+    baseCurrency: String,
+    targetCurrencies: List<String>,
+    exchangeRateData: List<Map<String, Double>>
+): Map<String, Double>? {
+    val baseRates = exchangeRateData.firstOrNull { it.containsKey(baseCurrency) }
+
+    if (baseRates != null) {
+        val convertedAmounts = mutableMapOf<String, Double>()
+
+        targetCurrencies.forEach { toCurrency ->
+            val fromRate = baseRates[baseCurrency]
+            val toRate = baseRates[toCurrency]
+
+            if (fromRate != null && toRate != null) {
+                val baseAmount = amount / fromRate
+                val convertedAmount = roundDouble(baseAmount * toRate, 4)
+                convertedAmounts[toCurrency] = convertedAmount
+            }
+        }
+
+        return convertedAmounts
+    }
+
+    return null // Handle missing base rates
 }
 
 
