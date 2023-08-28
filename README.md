@@ -27,8 +27,9 @@ This Android application is developed using the MVVM (Model-View-ViewModel) arch
 
 ## Screenshots
 
-!![Screenshot 1](https://github.com/AhmedAlamin/Currency/assets/18472540/fa7098ae-0754-42b5-94bc-9494657155fc)
-!![Screenshot 2](https://github.com/AhmedAlamin/Currency/assets/18472540/60ac39d6-5350-4139-aa90-e92a57873c8d)
+![Screenshot 1](https://github.com/AhmedAlamin/Currency/assets/18472540/956f860b-a3d2-4316-b2ed-b18228f63830)
+!![Screenshot 2](https://github.com/AhmedAlamin/Currency/assets/18472540/fa7098ae-0754-42b5-94bc-9494657155fc)
+!![Screenshot 3](https://github.com/AhmedAlamin/Currency/assets/18472540/60ac39d6-5350-4139-aa90-e92a57873c8d)
 
 
 
