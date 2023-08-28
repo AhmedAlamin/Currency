@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -48,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
@@ -66,7 +68,7 @@ import java.math.RoundingMode
 import kotlin.random.Random
 
 @AndroidEntryPoint
-class MainActivity:ComponentActivity() {
+class MainActivity : ComponentActivity() {
 
     private val viewModel: CurrencyViewModel by viewModels()
 
@@ -76,21 +78,35 @@ class MainActivity:ComponentActivity() {
 
         val sharedPreferencesManager = SharedPreferencesManager(this)
 
-
-        viewModel.getRates()
-
         setContent {
+            val currencyState by viewModel.currencyState.collectAsState()
 
-                val currenciesRates by viewModel.currenciesRates.collectAsState()
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                // UI Update based on the collected state
+                when (currencyState) {
+                    is CurrencyViewModel.CurrencyState.Loading -> {
+                        CircularProgressIndicator()
+                    }
 
-                Nav(currenciesRates = currenciesRates, sharedPreferencesManager)
+                    is CurrencyViewModel.CurrencyState.Success -> {
+                        val data = (currencyState as CurrencyViewModel.CurrencyState.Success).data
+                        Nav(currenciesRates = data, sharedPreferencesManager)
+                    }
 
-
-
-
-
+                    is CurrencyViewModel.CurrencyState.Error -> {
+                        val errorMessage =
+                            (currencyState as CurrencyViewModel.CurrencyState.Error).message
+                        Text(text = errorMessage, color = Color.Red)
+                    }
+                }
+            }
 
         }
+
+
     }
 
 }
@@ -154,7 +170,7 @@ fun IconTextButton(
     ) {
         Row(
             horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically // Center the content vertically
         ) {
             Icon(imageVector = icon, contentDescription = null)
             Spacer(modifier = Modifier.width(4.dp)) // Space between icon and text
@@ -172,31 +188,9 @@ fun CurrencyScreen(
 ) {
     var listOfCurrencies by remember { mutableStateOf<List<String>>(emptyList()) }
 
-//    // Fetch the list of currencies from API
-//    LaunchedEffect(true) {
-////        listOfCurrencies = fetchListOfCurrenciesFromApi()
-//        listOfCurrencies = currenciesRates?.rates?.keys?.toList() ?: emptyList()
-//    }
-
-    // Simulate fetching currenciesRates from API
-    LaunchedEffect(true) {
-        // Fetch currenciesRates from API (Replace with actual API call)
-         // Implement this
-
-        if (currenciesRates != null) {
-//            currenciesRates = fetchedRates
-            listOfCurrencies = currenciesRates.rates.keys.toList() ?: emptyList()
-        }
+    if (currenciesRates != null) {
+        listOfCurrencies = currenciesRates.rates.keys.toList() ?: emptyList()
     }
-
-
-
-
-
-
-
-    Log.d("vvvv",listOfCurrencies.toString())
-
 
 
     var selectedCurrency1 by remember { mutableStateOf(currenciesRates?.rates?.keys?.first()) }
@@ -223,9 +217,10 @@ fun CurrencyScreen(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background,
 
-        ) {
+            ) {
 
             Column(
+                verticalArrangement = Arrangement.Center,
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight()
@@ -235,7 +230,7 @@ fun CurrencyScreen(
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
+
                 ) {
                     // Content for the first row (1/3 of the total height)
                     Row(
@@ -249,7 +244,7 @@ fun CurrencyScreen(
                         Column(
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.weight(1.0f,true)
+                            modifier = Modifier.weight(1.0f, true)
                         ) {
                             Text(text = "FROM")
 
@@ -273,7 +268,7 @@ fun CurrencyScreen(
                                                     selectedCurrency1!!,
                                                     selectedCurrency2!!,
                                                     currenciesRates!!
-                                                )?: 0.0
+                                                ) ?: 0.0
                                             },
                                             modifier = Modifier.wrapContentWidth()
                                         )
@@ -285,35 +280,36 @@ fun CurrencyScreen(
                             Spacer(modifier = Modifier.size(16.dp))
 
 
-
                         }
 
 
-                        IconTextButton(text = "Switch", icon = Icons.Default.Info, onClick = {
+                        IconTextButton(
+                            text = "Switch", icon = Icons.Default.Info,
+                            onClick = {
 
-                            var temp = selectedCurrency1
-                            selectedCurrency1 = selectedCurrency2
-                            selectedCurrency2 = temp
+                                var temp = selectedCurrency1
+                                selectedCurrency1 = selectedCurrency2
+                                selectedCurrency2 = temp
 
-                            var temp2 = amount
-                            amount = amount2
-                            amount2 = temp2
+                                var temp2 = amount
+                                amount = amount2
+                                amount2 = temp2
 
 
-                            amount2 = convertCurrency(
-                                amount,
-                                selectedCurrency1!!,
-                                selectedCurrency2!!,
-                                currenciesRates!!
-                            )?:0.0
-                        },
+                                amount2 = convertCurrency(
+                                    amount,
+                                    selectedCurrency1!!,
+                                    selectedCurrency2!!,
+                                    currenciesRates!!
+                                ) ?: 0.0
+                            },
                         )
 
 
                         Column(
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.weight(1.0f,true)
+                            modifier = Modifier.weight(1.0f, true)
                         ) {
                             Text(text = "TO")
 
@@ -337,7 +333,7 @@ fun CurrencyScreen(
                                                     selectedCurrency1!!,
                                                     selectedCurrency2!!,
                                                     currenciesRates!!
-                                                )?:0.0
+                                                ) ?: 0.0
                                             },
                                             modifier = Modifier.wrapContentWidth()
                                         )
@@ -349,20 +345,17 @@ fun CurrencyScreen(
                             Spacer(modifier = Modifier.size(16.dp))
 
 
-
-
                         }
 
                     }
-
-
                 }
 
-                Row( verticalAlignment = Alignment.CenterVertically,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
+
                 ) {
 
                     Row(
@@ -381,7 +374,7 @@ fun CurrencyScreen(
                                     selectedCurrency1!!,
                                     selectedCurrency2!!,
                                     currenciesRates!!
-                                )?:0.0
+                                ) ?: 0.0
                             },
                             keyboardActions = KeyboardActions(onDone = {
                                 amount2 = convertCurrency(
@@ -433,7 +426,7 @@ fun CurrencyScreen(
                                     selectedCurrency1!!,
                                     selectedCurrency2!!,
                                     currenciesRates!!
-                                )?:0.0
+                                ) ?: 0.0
                             },
                             keyboardActions = KeyboardActions(onDone = {
                                 amount = convertCurrency(
@@ -481,7 +474,7 @@ fun CurrencyScreen(
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
+
 
                 ) {
                     // Content for the third row (1/4 of the total height)
@@ -504,9 +497,6 @@ fun CurrencyScreen(
                     }
                 }
             }
-
-
-
 
 
 //            Column(
@@ -782,10 +772,6 @@ fun CurrencyScreen(
 //                }
 //
 //            }
-
-
-
-
 
 
         }
