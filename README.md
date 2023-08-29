@@ -35,8 +35,7 @@ This Android application is developed using the MVVM (Model-View-ViewModel) arch
   <img src="https://github.com/AhmedAlamin/Currency/assets/18472540/fa7098ae-0754-42b5-94bc-9494657155fc" alt="appAcrch" width="45%">
   <img src="https://github.com/AhmedAlamin/Currency/assets/18472540/60ac39d6-5350-4139-aa90-e92a57873c8d" alt="Screenshot 1" width="45%">
 </div>
-!![Screenshot 2](https://github.com/AhmedAlamin/Currency/assets/18472540/fa7098ae-0754-42b5-94bc-9494657155fc)
-!![Screenshot 3](https://github.com/AhmedAlamin/Currency/assets/18472540/60ac39d6-5350-4139-aa90-e92a57873c8d)
+
 
 
 
